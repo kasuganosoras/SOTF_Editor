@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sons Of The Forest - Save files editor by Akkariin | Inventory Editor</title>
+    <link href="https://cfdx.zerodream.net/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cfdx.zerodream.net/css/admin.min.css" rel="stylesheet">
+    <link href="https://cfdx.zerodream.net/css/codemirror/codemirror.min.css" rel="stylesheet">
+    <link href="https://cfdx.zerodream.net/css/codemirror/monokai.min.css" rel="stylesheet">
+    <link href="https://cfdx.zerodream.net/font-awesome-pro-6.2.0/css/all.css" rel="stylesheet">
+    <link href="css/application.css" rel="stylesheet">
+    <style type="text/css">
+        .large-content {
+            min-height: 200px;
+            max-height: 512px;
+            min-width: 100%;
+            max-width: 100%;
+        }
+
+        .middle-content {
+            min-height: 100px;
+            max-height: 512px;
+            min-width: 100%;
+            max-width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <h1>Sons Of The Forest <span class="description">Save files editor by Akkariin</span></h1>
+                <div class="menu">
+                    <a href="./" title="Player"><i class="fas fa-signal-bars"></i>Player</a>
+                    <a href="./inventory.html" title="Inventory"><i class="fas fa-backpack"></i>Inventory</a>
+                    <a href="./entities.html" title="Entities"><i class="fas fa-skull"></i>Entities</a>
+                    <a href="./stats.html" title="Stats"><i class="fas fa-earth-americas"></i>Stats</a>
+                    <a href="./setup.html" title="Setup"><i class="fas fa-gear"></i>Setup</a>
+                    <a href="https://github.com/kasuganosoras/SOTF_Editor" title="Github" target="_blank"><i class="fas fa-brands fa-github"></i>Source Code</a>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="box">
+                    <div class="box-header">
+                        <h3 class="box-title">Inventory Editor</h3>
+                    </div>
+                    <div class="box-body">
+                        <p>The <b>PlayerInventorySaveData.json</b> file stored all the items you collect in the game, you can edit the count to incrase or decrase the items.</p>
+                        <p>I tried to find the most item's ID, when you input the ID, it will display the item name.</p>
+                        <details>
+                            <summary><p><a class="force-link">Click here to see the item list</a></p></summary>
+
+                            <p>Here is the item ID list, if you want to add a new item, you can find the ID here. Some item name may not correct due to the translation issue, English is not my mother language.</p>
+                            <div class="itemid-list"></div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="box">
+                    <div class="box-header">
+                        <h3 class="box-title">Save File</h3>
+                    </div>
+                    <div class="box-body">
+                        <p>The save files can be found in this path, you can copy the path and replace the username and Steam ID to yours, then paste it in the file manager to open.</p>
+                        <p>If your computer has only logged your own Steam account, that should only have one child folder in your "Saves" folder. If there are many folders, you can find your Steam ID on <a href="https://steamid.io/" target="_blank">SteamID.IO</a> website.</p>
+                        <pre><code>C:\Users\&lt;Your Username&gt;\AppData\LocalLow\Endnight\SonsOfTheForest\Saves\&lt;Your Steam ID&gt;</code></pre>
+                        <p>When you open this folder, there will have up to 3 child folders inside it, the "Multiplayer" stored the files when you are the host in multiplayer game, the "SinglePlayer" is for single player game.</p>
+                        <p>Choose the game type you want to edit and open it, then you may see there are many child folders, you can sort them by modify time to find the latest save.</p>
+                        <hr>
+                        <h4>Load File</h4>
+                        <p>Please select PlayerInventorySaveData.json file</p>
+                        <p><input type="file" id="file" name="file" accept=".json" /></p>
+                        <button onclick="LoadSaveFile()" class="btn btn-small btn-block btn-success">Load File</button>
+                        <button onclick="SaveSaveFile()" class="btn btn-small btn-block btn-primary">Save File</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-8 editor-main">
+                <div class="box">
+                    <div class="box-header">
+                        <h3 class="box-title">Save Editor</h3>
+                    </div>
+                    <div class="box-body editor-body">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" src="https://cfdx.zerodream.net/js/jquery.min.js"></script>
+<script type="text/javascript" src="https://cfdx.zerodream.net/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://cfdx.zerodream.net/js/sweetalert2/sweetalert2.all.min.js"></script>
+<script type="text/javascript">
+
+    var cacheSave;
+    var cacheFile;
+    var itemList = {
+        "Aloe Vera": 451,
+        "Air tank": 469,
+        "Backpack": 402,
+        "Battery": 527,
+        "Blueprint Book": 552,
+        "Shotgun ammunition": 364,
+        "Chain saw": 394,
+        "Knife": 380,
+        "Cooking pot": 517,
+        "Handmade spear": 474,
+        "Cross bow": 365,
+        "Emergency package": 483,
+        "Energy drinks": 439,
+        "Energy Bar": 441,
+        "Energy supplement": 461,
+        "Energy Booster": 462,
+        "Feather": 479,
+        "Fish": 436,
+        "Flashlight": 471,
+        "Food tray": 497,
+        "Tray full of food": 512,
+        "Golden armour": 572,
+        "GPS Locator": 529,
+        "GPS Tracker": 412,
+        "Grab Bag": 351,
+        "Life potion": 455,
+        "Life potion+": 456,
+        "Fur bag": 508,
+        "Log": 78,
+        "LogPlank": 395,
+        "LogQuarter1x": 406,
+        "LogQuarter2x": 408,
+        "LogQuarter3x": 409,
+        "LogPlankQuarter1x": 576,
+        "LogPlankQuarter2x": 577,
+        "LogPlankQuarter3x": 578,
+        "Drugs": 437,
+        "Money": 496,
+        "Strange Armor": 593,
+        "Pistol": 355,
+        "Pistol ammunition": 362,
+        "Lighter": 413,
+        "Print kettle": 426,
+        "Print sled": 428,
+        "Printer resin": 390,
+        "Radio": 590,
+        "Raw meat": 433,
+        "Breather": 444,
+        "Revolver": 386,
+        "Rock": 393,
+        "Rope": 403,
+        "Rope gun": 522,
+        "Broken hand": 480,
+        "Broken leg": 481,
+        "Shotgun rail": 346,
+        "Shotgun": 358,
+        "Shotgun Bullet": 363,
+        "Stick": 392,
+        "Stun gun": 353,
+        "Stun gun ammunition": 369,
+        "Swimwear": 619,
+        "Battle axe": 379,
+        "Tarpaulin": 504,
+        "Technology armor": 554,
+        "Torch": 503,
+        "Turtle shell": 506,
+        "Tutorial book": 589,
+        "Intercom": 486,
+        "Watch": 410,
+        "Steel clue": 523,
+        "Scimitar": 359,
+        "Composite bow": 360,
+        "Lead Ammunition": 364,
+        "Samurai sword": 367,
+        "Cross bow and crossbow": 368,
+        "9mm bullet": 370,
+        "Lead bullets": 371,
+        "Scattered bullets": 372,
+        "Carbon fiber bow and arrow": 373,
+        "Silencer": 374,
+        "Laser sight": 375,
+        "Pistol rail": 376,
+        "Flashlight accessories": 378,
+        "Grenade": 381,
+        "Cross bow and crossbow": 384,
+        "Combustion bottle": 388,
+        "Gasoline bomb": 389,
+        "Red Mask": 391,
+        "Electric shock rod": 396,
+        "Zhirong": 397,
+        "Pleurotus eryngii": 398,
+        "Bordetella": 399,
+        "Amanita mushroom": 400,
+        "Tortoise egg": 401,
+        "Bone": 405,
+        "Vodka bottle": 414,
+        "Cloth": 415,
+        "Circuit board": 416,
+        "Time bomb": 417,
+        "Steel wire": 418,
+        "Strong adhesive tape": 419,
+        "C4 explosive brick": 420,
+        "Lamian Noodles": 421,
+        "Cereal breakfast": 425,
+        "Pattern water bottle": 426,
+        "Pattern sled": 428,
+        "Skull": 430,
+        "Fire axe": 431,
+        "Ordinary meat": 433,
+        "Canned food": 434,
+        "Gold Mask": 435,
+        "Instant grain bag": 438,
+        "Flare": 440,
+        "Refined bow": 443,
+        "Blueberry": 445,
+        "Twin berries": 446,
+        "Salmon berry": 447,
+        "Snow fruit": 448,
+        "Ginseng": 449,
+        "Thief": 450,
+        "Feather": 452,
+        "Liulan": 453,
+        "Arrow leaf taro": 454,
+        "Ammunition of electric shock gun": 457,
+        "Battery charger": 458,
+        "Slingshot": 459,
+        "Cat food": 464,
+        "Chicory": 465,
+        "Oyster": 466,
+        "Cross": 468,
+        "Hides": 472,
+        "Leaf beetle": 473,
+        "Synthetic spear": 474,
+        "Little stone": 476,
+        "Synthetic stick": 477,
+        "Mountain axe": 478,
+        "Head": 482,
+        "Leaves": 484,
+        "Shovel": 485,
+        "Intercom": 486,
+        "Pajamas": 487,
+        "Sweater": 490,
+        "Coat": 491,
+        "Dress": 492,
+        "Leather coat": 493,
+        "Bone armor": 494,
+        "Tactical coat": 495,
+        "Diving suit": 499,
+        "Winter coat": 500,
+        "Gold coin": 502,
+        "Torch": 503,
+        "Stone arrow": 507,
+        "Contact transmitter": 511,
+        "Spring": 513,
+        "Contact spring transmitter": 514,
+        "Paper gun target": 518,
+        "Skin armour": 519,
+        "Rope gun": 522,
+        "Golf": 524,
+        "Golf Club": 525,
+        "Battery": 527,
+        "Scientific fabric": 553,
+        "Track and field clothes": 555,
+        "Skirt": 556,
+        "Leather suit": 557,
+        "Camouflage clothing": 558,
+        "Pattern claw": 560,
+        "Head meat": 569,
+        "Steak piece": 570,
+        "Bacon block": 571,
+        "Golden armour": 572,
+        "Sleeping bag": 573,
+        "Radio": 590,
+        "Disgusting skin": 592,
+        "Disgusting armour": 593,
+        "Brazil Cocoa": 594,
+        "Blackberry": 595,
+        "Aloe seed": 596,
+        "Arrow leaf taro seed": 597,
+        "Blackberry seed": 598,
+        "Blueberry bush seeds": 599,
+        "Ginseng seed": 600,
+        "Willow seed": 601,
+        "Brazil cacao seed": 602,
+        "Sepia seed": 603,
+        "Salmon berry seed": 604,
+        "Chicory seed": 605,
+        "Clover seed": 606,
+        "3D printing arrow": 618,
+        "Swimwear": 619,
+    }
+
+    function ShowItemId() {
+        var result = "";
+        var sp = 0;
+        for(var name in itemList) {
+            var itemId = itemList[name];
+            if(sp == 0) {
+                result += `<div class="input-group editor-input">`;
+            }
+            var template = `<span class="input-group-addon">${name}</span><input type="number" class="form-control" readonly value="${itemId}" placeholder="物品ID" />`;
+            result += template;
+            if(sp == 5) {
+                result += `</div>`;
+                sp = 0;
+            } else {
+                sp++;
+            }
+        }
+        console.log(result);
+        $(".itemid-list").html(result);
+    }
+
+    function LoadSaveFile() {
+        var file = document.getElementById("file").files[0];
+        if (file == null) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Please select a save file',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            })
+            return;
+        }
+        var reader = new FileReader();
+        reader.readAsText(file, "UTF-8");
+        reader.onload = function(evt) {
+            var data = evt.target.result;
+            var json = JSON.parse(data);
+            if(json["Data"]["PlayerInventory"] != null && json["Data"]["PlayerInventory"] != undefined) {
+                cacheSave = json;
+                console.log(json["Data"]["PlayerInventory"]);
+                LoadPlayerInventory(json["Data"]["PlayerInventory"]);
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to load save file, please select a valid save file',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                })
+            }
+        }
+        reader.onerror = function(evt) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to load save file, please select a valid save file',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            })
+        }
+    }
+
+    function LoadPlayerInventory(text) {
+        var json = JSON.parse(text);
+        if(json["ItemInstanceManagerData"]['ItemBlocks'] != null && json["ItemInstanceManagerData"]['ItemBlocks'] != undefined) {
+            cacheFile = json;
+            $(".editor-body").html(`<h4>Warning: Please backup your save file before editing it, and make sure you know what you are doing.</h4><div class="input-list"></div><button onclick="AddItemInputForm('', '')" class="btn btn-small btn-block btn-success">Add Item</button>`);
+            $(".editor-main").fadeIn();
+            for(var i = 0; i < json["ItemInstanceManagerData"]['ItemBlocks'].length; i++) {
+                var element = json["ItemInstanceManagerData"]['ItemBlocks'][i];
+                AddItemInputForm(element["ItemId"], element["TotalCount"]);
+            }
+            var keyList = $(".editor-key");
+            for(var i = 0; i < keyList.length; i++) {
+                UpdateItemPreview(keyList[i]);
+            }
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to load save file, please select a valid save file',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            })
+        }
+    }
+
+    function GetItemNameById(id) {
+        if(id == "") return "Item ID";
+        for(var key in itemList) {
+            if(itemList[key] == id) {
+                return key;
+            }
+        }
+        return "Unknown Item";
+    }
+
+    function RemoveItemInputForm(element) {
+        $(element).parent().parent().remove();
+    }
+
+    function AddItemInputForm(id, count) {
+        var html = `<p><div class="input-group editor-input"><span class="input-group-addon item-name">Item ID</span><input type="number" class="form-control editor-key" onkeyup="UpdateItemPreview(this)" value="${id}" placeholder="Item ID" /><span class="input-group-addon">Count</span><input type="number" class="form-control editor-value" value="${count}" placeholder="Item Count" /><span class="input-group-btn"><button title="Remove this item" class="btn" type="button" onclick="RemoveItemInputForm(this)"><i class="fa fa-xmark"></i></button></span></div></p>`;
+        $(".input-list").append(html);
+    }
+
+    function UpdateItemPreview(element) {
+        var id = $(element).val();
+        var name = GetItemNameById(id);
+        $(element).parent().find(".item-name").html(name);
+    }
+
+    function SaveSaveFile() {
+        var groups = $(".editor-input");
+        for(var i = 0; i < groups.length; i++) {
+            var key = $(groups[i]).find(".editor-key").val();
+            var value = $(groups[i]).find(".editor-value").val();
+            if(key != "" && value != "" && key != undefined) {
+                var finded = false;
+                for(var j = 0; j < cacheFile["ItemInstanceManagerData"]['ItemBlocks'].length; j++) {
+                    var element = cacheFile["ItemInstanceManagerData"]['ItemBlocks'][j];
+                    if(element["ItemId"] == key) {
+                        console.log(`修改物品 ${key} 数量为 ${value}`);
+                        element["TotalCount"] = parseInt(value);
+                        finded = true;
+                    }
+                }
+                if(!finded) {
+                    console.log(`添加物品 ${key} 数量为 ${value}`);
+                    cacheFile["ItemInstanceManagerData"]['ItemBlocks'].push({
+                        "ItemId": key,
+                        "TotalCount": parseInt(value),
+                        "UniqueItems": []
+                    });
+                }
+            }
+        }
+        var tempJson = JSON.stringify(cacheFile);
+        var htmlObj = $.ajax({
+            url: "api.php?type=inventory",
+            method: "POST",
+            async: true,
+            data: {
+                "data": tempJson
+            },
+            success: function() {
+                var jsonCheck = JSON.parse(htmlObj.responseText);
+                if(jsonCheck["ItemInstanceManagerData"]['ItemBlocks'] == null || jsonCheck["ItemInstanceManagerData"]['ItemBlocks'] == undefined) {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Failed to save file, cannot connect to API server, please try again later',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    })
+                    return;
+                } else {
+                    cacheSave["Data"]["PlayerInventory"] = htmlObj.responseText;
+                    var blob = new Blob([JSON.stringify(cacheSave)], {type: "text/plain;charset=utf-8"});
+                    SaveAs(blob, "PlayerInventorySaveData.json");
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to save file, cannot connect to API server, please try again later',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                })
+            }
+        })
+    }
+
+    function SaveAs(obj, fileName) {
+        var link = document.createElement('a');
+        link.download = fileName;
+        link.style.display = 'none';
+        link.href = URL.createObjectURL(obj);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    $(document).ready(function() {
+        ShowItemId();
+    });
+</script>
+
+</html>

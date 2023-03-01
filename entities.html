@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sons Of The Forest - Save files editor by Akkariin | Entities Editor</title>
+    <link href="https://cfdx.zerodream.net/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cfdx.zerodream.net/css/admin.min.css" rel="stylesheet">
+    <link href="https://cfdx.zerodream.net/css/codemirror/codemirror.min.css" rel="stylesheet">
+    <link href="https://cfdx.zerodream.net/css/codemirror/monokai.min.css" rel="stylesheet">
+    <link href="https://cfdx.zerodream.net/font-awesome-pro-6.2.0/css/all.css" rel="stylesheet">
+    <link href="css/application.css" rel="stylesheet">
+    <style type="text/css">
+        .large-content {
+            min-height: 200px;
+            max-height: 512px;
+            min-width: 100%;
+            max-width: 100%;
+        }
+
+        .middle-content {
+            min-height: 100px;
+            max-height: 512px;
+            min-width: 100%;
+            max-width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <h1>Sons Of The Forest <span class="description">Save files editor by Akkariin</span></h1>
+                <div class="menu">
+                    <a href="./" title="Player"><i class="fas fa-signal-bars"></i>Player</a>
+                    <a href="./inventory.html" title="Inventory"><i class="fas fa-backpack"></i>Inventory</a>
+                    <a href="./entities.html" title="Entities"><i class="fas fa-skull"></i>Entities</a>
+                    <a href="./stats.html" title="Stats"><i class="fas fa-earth-americas"></i>Stats</a>
+                    <a href="./setup.html" title="Setup"><i class="fas fa-gear"></i>Setup</a>
+                    <a href="https://github.com/kasuganosoras/SOTF_Editor" title="Github" target="_blank"><i class="fas fa-brands fa-github"></i>Source Code</a>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="box">
+                    <div class="box-header">
+                        <h3 class="box-title">Entities Editor</h3>
+                    </div>
+                    <div class="box-body">
+                        <p>The <b>SaveData.json</b> file has stored all the entities in the game world. You can edit the entity health, fullness, etc.</p>
+                        <p>You can also copy or delete an entity. The browser may stop response for a short time due to loading the large JSON file.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="box">
+                    <div class="box-header">
+                        <h3 class="box-title">Save File</h3>
+                    </div>
+                    <div class="box-body">
+                        <p>The save files can be found in this path, you can copy the path and replace the username and Steam ID to yours, then paste it in the file manager to open.</p>
+                        <p>If your computer has only logged your own Steam account, that should only have one child folder in your "Saves" folder. If there are many folders, you can find your Steam ID on <a href="https://steamid.io/" target="_blank">SteamID.IO</a> website.</p>
+                        <pre><code>C:\Users\&lt;Your Username&gt;\AppData\LocalLow\Endnight\SonsOfTheForest\Saves\&lt;Your Steam ID&gt;</code></pre>
+                        <p>When you open this folder, there will have up to 3 child folders inside it, the "Multiplayer" stored the files when you are the host in multiplayer game, the "SinglePlayer" is for single player game.</p>
+                        <p>Choose the game type you want to edit and open it, then you may see there are many child folders, you can sort them by modify time to find the latest save.</p>
+                        <hr>
+                        <h4>Select File</h4>
+                        <p>Please select SaveData.json file</p>
+                        <p><input type="file" id="file" name="file" accept=".json" /></p>
+                        <p>
+                            <button onclick="LoadSaveFile()" class="btn btn-small btn-block btn-success">Load File</button>
+                            <button onclick="SaveSaveFile()" class="btn btn-small btn-block btn-primary">Save File</button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-8 editor-main">
+                <div class="box">
+                    <div class="box-header">
+                        <h3 class="box-title">Save Editor</h3>
+                    </div>
+                    <div class="box-body">
+                        <div class="panel-group input-list" id="inputlist">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" src="https://cfdx.zerodream.net/js/jquery.min.js"></script>
+<script type="text/javascript" src="https://cfdx.zerodream.net/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://cfdx.zerodream.net/js/sweetalert2/sweetalert2.all.min.js"></script>
+<script type="text/javascript">
+
+    var cacheSave;
+    var cahceJson;
+    var cacheActors;
+
+    function LoadSaveFile() {
+        var file = document.getElementById("file").files[0];
+        if (file == null) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Please select a file',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            })
+            return;
+        }
+        var reader = new FileReader();
+        reader.readAsText(file, "UTF-8");
+        reader.onload = function(evt) {
+            var data = evt.target.result;
+            var json = JSON.parse(data);
+            cacheSave = json;
+            if(json["Data"]["VailWorldSim"] != null && json["Data"]["VailWorldSim"] != undefined) {
+                console.log(json["Data"]["VailWorldSim"]);
+                LoadVailWorldSim(json["Data"]["VailWorldSim"]);
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to load the save file, please check if the file is correct',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                })
+            }
+        }
+        reader.onerror = function(evt) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to load the save file, please check if the file is correct',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            })
+        }
+    }
+
+    function LoadVailWorldSim(text) {
+        var json = JSON.parse(text);
+        if(json["Actors"] != null && json["Actors"] != undefined) {
+            cacheJson = json;
+            cacheActors = json["Actors"];
+            $(".input-list").html(`<h4>Warning: Edit the file may crash your game, please backup your save file before editing it.</h4>
+                <p>There are known entity type: Kevin - 9, Virginia - 10; The entity state 2 is for living, 6 is for dead; If you want to revive the Kevin or Virginia, you should also change the Health, Hydration and Energy to 100.</p>
+                <p><div class="input-group">
+                    <span class="input-group-addon">Filter Type</span>
+                    <input type="number" class="form-control filter-type" onkeyup="FilterType(this.value)" placeholder="Enter type ID" />
+                    <span class="input-group-addon">Filter ID</span>
+                    <input type="number" class="form-control filter-id" onkeyup="FilterId(this.value)" placeholder="Enter entity ID" />
+                    <!-- button -->
+                    <span class="input-group-btn">
+                        <button type="button" class="btn btn-info" onclick="ClearSearch()">All</button>
+                        <button type="button" class="btn btn-success" onclick="AddEntity()">New</button>
+                    </span>
+                </div></p>`);
+            $(".editor-main").fadeIn();
+            var memoryCache = "";
+            for(var i = 0; i < json["Actors"].length; i++) {
+                var element = json["Actors"][i];
+                memoryCache += AddActorInputForm(i, element);
+            }
+            $(".input-list").append(memoryCache);
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to load the save file, please check if the file is correct',
+                icon: 'error',
+                confirmButtonText: '确定'
+            })
+        }
+    }
+
+    function FilterType(type) {
+        if(type == "") {
+            $(".input-list").find(".actor-form").show();
+        } else {
+            $(".input-list").find(".actor-form").hide();
+            $(".input-list").find(".actor-form[data-type='" + type + "']").show();
+        }
+    }
+
+    function FilterId(id) {
+        if(id == "") {
+            $(".input-list").find(".actor-form").show();
+        } else {
+            $(".input-list").find(".actor-form").hide();
+            $(".input-list").find(".actor-form[data-uid='" + id + "']").show();
+        }
+    }
+
+    function GetNewUniqueId() {
+        var max = 0;
+        for(var i = 0; i < cacheActors.length; i++) {
+            var element = cacheActors[i];
+            if(element["UniqueId"] > max) {
+                max = element["UniqueId"];
+            }
+        }
+        return max + 1;
+    }
+
+    function GetActorById(id) {
+        for(var i = 0; i < cacheActors.length; i++) {
+            var element = cacheActors[i];
+            if(element["UniqueId"] == id) {
+                return element;
+            }
+        }
+        return null;
+    }
+
+    function AddEntity() {
+        var newUniqueId = GetNewUniqueId();
+        var newActor = {
+            "UniqueId": newUniqueId,
+            "TypeId": 0,
+            "FamilyId": 0,
+            "Position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.0
+            },
+            "SpawnerId": -1,
+            "ActorSeed": -1,
+            "VariationId": 0,
+            "State": 2,
+            "GraphMask": 1,
+            "EquippedItems": null,
+            "OutfitId": -1,
+            "NextGiftTime": 0.0,
+            "LastVisitTime": -100.0,
+            "Stats": {
+                "Health": 100.0,
+                "Anger": 0.0,
+                "Fear": 0.0,
+                "Fullness": 0.0,
+                "Hydration": 0.0,
+                "Energy": 100.0,
+                "Affection": 0.0
+            },
+            "StateFlags": 0
+        };
+        cacheActors.push(newActor);
+        $(".input-list").append(AddActorInputForm(cacheActors.length - 1, newActor));
+        FilterId(newUniqueId);
+        $(".filter-id").val(newUniqueId);
+    }
+
+    function DeleteEntity(id) {
+        console.log(`Delete ${id}`);
+        var currentSearch = $(".filter-type").val();
+        ClearSearch();
+        $(".filter-type").val(currentSearch);
+        FilterType(currentSearch);
+        var newList = [];
+        for(var i = 0; i < cacheActors.length; i++) {
+            var element = cacheActors[i];
+            if(element["UniqueId"] == id) {
+                console.log(`Deleted actor ${i}`);
+                $(".input-list").find(".actor-form[data-uid='" + id + "']").remove();
+                cacheActors[i] = null;
+            } else {
+                newList.push(element);
+            }
+        }
+        cacheActors = newList;
+    }
+
+    function CopyTable(table) {
+        return JSON.parse(JSON.stringify(table));
+    }
+
+    function CopyEntity(id) {
+        ClearSearch();
+        var actor = GetActorById(id);
+        if(actor != null) {
+            var newActor = CopyTable(actor);
+            var newUniqueId = GetNewUniqueId();
+            newActor["UniqueId"] = newUniqueId;
+            cacheActors.push(newActor);
+            $(".input-list").append(AddActorInputForm(cacheActors.length - 1, newActor));
+            FilterId(newUniqueId);
+            $(".filter-id").val(newUniqueId);
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to copy the entity, please check if the entity exists',
+                icon: 'error',
+                confirmButtonText: '确定'
+            });
+        }
+    }
+
+    function ClearSearch() {
+        $(".filter-type").val("");
+        $(".filter-id").val("");
+        FilterId("");
+    }
+
+    function SaveSaveFile() {
+        var actors = $(".actor-form");
+        for(var i = 0; i < actors.length; i++) {
+            var element = actors[i];
+            var id = $(element).attr("data-index");
+            var actor = cacheActors[id];
+            if(element != undefined && element != null && actor != undefined && actor != null) {
+                var equipItems = $(element).find(".entity-EquippedItems").val();
+                actor["UniqueId"] = parseInt($(element).find(".entity-UniqueId").val());
+                actor["TypeId"] = parseInt($(element).find(".entity-TypeId").val());
+                actor["FamilyId"] = parseInt($(element).find(".entity-FamilyId").val());
+                if(actor["Position"] != null) {
+                    actor["Position"]["x"] = parseFloat($(element).find(".entity-PositionX").val());
+                    actor["Position"]["y"] = parseFloat($(element).find(".entity-PositionY").val());
+                    actor["Position"]["z"] = parseFloat($(element).find(".entity-PositionZ").val());
+                }
+                if(actor["Rotation"] != null) {
+                    actor["Rotation"]["x"] = parseFloat($(element).find(".entity-RotationX").val());
+                    actor["Rotation"]["y"] = parseFloat($(element).find(".entity-RotationY").val());
+                    actor["Rotation"]["z"] = parseFloat($(element).find(".entity-RotationZ").val());
+                    actor["Rotation"]["w"] = parseFloat($(element).find(".entity-RotationW").val());
+                }
+                actor["SpawnerId"] = parseInt($(element).find(".entity-SpawnerId").val());
+                actor["ActorSeed"] = parseInt($(element).find(".entity-ActorSeed").val());
+                actor["VariationId"] = parseInt($(element).find(".entity-VariationId").val());
+                actor["State"] = parseInt($(element).find(".entity-State").val());
+                actor["GraphMask"] = parseInt($(element).find(".entity-GraphMask").val());
+                actor["EquippedItems"] = equipItems == "" ? null : equipItems.split(",");
+                actor["OutfitId"] = parseInt($(element).find(".entity-OutfitId").val());
+                actor["NextGiftTime"] = parseInt($(element).find(".entity-NextGiftTime").val());
+                actor["LastVisitTime"] = parseInt($(element).find(".entity-LastVisitTime").val());
+                if(actor["Stats"] != null) {
+                    actor["Stats"]["Health"] = parseFloat($(element).find(".entity-StatsHealth").val());
+                    actor["Stats"]["Anger"] = parseFloat($(element).find(".entity-StatsAnger").val());
+                    actor["Stats"]["Fear"] = parseFloat($(element).find(".entity-StatsFear").val());
+                    actor["Stats"]["Fullness"] = parseFloat($(element).find(".entity-StatsFullness").val());
+                    actor["Stats"]["Hydration"] = parseFloat($(element).find(".entity-StatsHydration").val());
+                    actor["Stats"]["Energy"] = parseFloat($(element).find(".entity-StatsEnergy").val());
+                    actor["Stats"]["Affection"] = parseFloat($(element).find(".entity-StatsAffection").val());
+                }
+                actor["StateFlags"] = parseInt($(element).find(".entity-StateFlags").val());
+                console.log(`Saving ${id} to ${actor["UniqueId"]}`);
+            } else {
+                console.log(`Skipping ${id}`);
+            }
+        }
+        var file = document.getElementById("file").files[0];
+        var reader = new FileReader();
+        reader.readAsText(file, "UTF-8");
+        reader.onload = function(evt) {
+            var data = evt.target.result;
+            var json = JSON.parse(data);
+            cacheJson["Actors"] = cacheActors;
+            var tempJson = JSON.stringify(cacheJson);
+            var htmlObj = $.ajax({
+                url: "api.php?type=entities",
+                method: "POST",
+                async: true,
+                data: {
+                    "data": tempJson
+                },
+                success: function() {
+                    var jsonCheck = JSON.parse(htmlObj.responseText);
+                    if(jsonCheck["Actors"] == null || jsonCheck["Actors"] == undefined) {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Failed to save the file, cannot connect to API server, please try again later',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                        return;
+                    } else {
+                        json["Data"]["VailWorldSim"] = htmlObj.responseText;
+                        var data = JSON.stringify(json);
+                        var blob = new Blob([data], {type: "text/plain;charset=utf-8"});
+                        SaveAs(blob, "SaveData.json");
+                    }
+                },
+                error: function() {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Failed to save the file, cannot connect to API server, please try again later',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        }
+    }
+
+    function SaveAs(obj, fileName) {
+        var link = document.createElement('a');
+        link.download = fileName;
+        link.style.display = 'none';
+        link.href = URL.createObjectURL(obj);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function AddActorInputForm(index, element) {
+        // console.log(`Adding ${element['UniqueId']}`);
+        var equipItems = element['EquippedItems'] == null ? "" : element['EquippedItems'].join(",");
+        var position = element['Position'] == null ? {} : element['Position'];
+        var rotation = element['Rotation'] == null ? {} : element['Rotation'];
+        var stats = element['Stats'] == null ? {} : element['Stats'];
+        var template = `<div class="panel panel-default actor-form" data-index="${index}" data-uid="${element['UniqueId']}" data-type="${element['TypeId']}">
+		<div class="panel-heading">
+			<h4 class="panel-title">
+				<a data-toggle="collapse" data-parent="#inputlist" 
+				   href="#panel${element['UniqueId']}">
+					Entity ${element['UniqueId']} | Type ${element['TypeId']}
+				</a>
+			</h4>
+		</div>
+		<div id="panel${element['UniqueId']}" class="panel-collapse collapse">
+			<div class="panel-body">
+				<p class="editor-input">
+                    <div class="input-group">
+                        <span class="input-group-addon item-name">Entity ID</span>
+                        <input type="number" class="form-control entity-UniqueId" readonly value="${element['UniqueId']}" placeholder="Entity ID" />
+                        <span class="input-group-addon">Type ID</span>
+                        <input type="number" class="form-control entity-TypeId" onkeyup="UpdateType(this)" value="${element['TypeId']}" placeholder="Type ID" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Family ID</span>
+                        <input type="number" class="form-control entity-FamilyId" value="${element['FamilyId']}" placeholder="Family ID" />
+                        <span class="input-group-addon">Spawner ID</span>
+                        <input type="number" class="form-control entity-SpawnerId" value="${element['SpawnerId']}" placeholder="Spawner ID" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Actor Seed</span>
+                        <input type="number" class="form-control entity-ActorSeed" value="${element['ActorSeed']}" placeholder="Actor Seed" />
+                        <span class="input-group-addon">Variation ID</span>
+                        <input type="number" class="form-control entity-VariationId" value="${element['VariationId']}" placeholder="Variation ID" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">State</span>
+                        <input type="number" class="form-control entity-State" value="${element['State']}" placeholder="State" />
+                        <span class="input-group-addon">Graph Mask</span>
+                        <input type="number" class="form-control entity-GraphMask" value="${element['GraphMask']}" placeholder="Graph Mask" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Equipped Items</span>
+                        <input type="text" class="form-control entity-EquippedItems" value="${equipItems}" placeholder="Equipped Items" />
+                        <span class="input-group-addon">Outfit ID</span>
+                        <input type="number" class="form-control entity-OutfitId" value="${element['OutfitId']}" placeholder="Outfit ID" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Next Gift Time</span>
+                        <input type="number" class="form-control entity-NextGiftTime" value="${element['NextGiftTime']}" placeholder="Next Gift Time" />
+                        <span class="input-group-addon">Last Visit Time</span>
+                        <input type="number" class="form-control entity-LastVisitTime" value="${element['LastVisitTime']}" placeholder="Last Visit Time" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Position</span>
+                        <span class="input-group-addon">X</span>
+                        <input type="number" class="form-control entity-PositionX" value="${position['x']}" placeholder="Position X" />
+                        <span class="input-group-addon">Y</span>
+                        <input type="number" class="form-control entity-PositionY" value="${position['y']}" placeholder="Position Y" />
+                        <span class="input-group-addon">Z</span>
+                        <input type="number" class="form-control entity-PositionZ" value="${position['z']}" placeholder="Position Z" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Rotation</span>
+                        <span class="input-group-addon">X</span>
+                        <input type="number" class="form-control entity-RotationX" value="${rotation['x']}" placeholder="Rotation X" />
+                        <span class="input-group-addon">Y</span>
+                        <input type="number" class="form-control entity-RotationY" value="${rotation['y']}" placeholder="Rotation Y" />
+                        <span class="input-group-addon">Z</span>
+                        <input type="number" class="form-control entity-RotationZ" value="${rotation['z']}" placeholder="Rotation Z" />
+                        <span class="input-group-addon">W</span>
+                        <input type="number" class="form-control entity-RotationW" value="${rotation['w']}" placeholder="Rotation W" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Health</span>
+                        <input type="number" class="form-control entity-StatsHealth" value="${stats['Health']}" placeholder="Health" />
+                        <span class="input-group-addon">Anger</span>
+                        <input type="number" class="form-control entity-StatsAnger" value="${stats['Anger']}" placeholder="Anger" />
+                        <span class="input-group-addon">Fear</span>
+                        <input type="number" class="form-control entity-StatsFear" value="${stats['Fear']}" placeholder="Fear" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Fullness</span>
+                        <input type="number" class="form-control entity-StatsFullness" value="${stats['Fullness']}" placeholder="Fullness" />
+                        <span class="input-group-addon">Hydration</span>
+                        <input type="number" class="form-control entity-StatsHydration" value="${stats['Hydration']}" placeholder="Hydration" />
+                        <span class="input-group-addon">Energy</span>
+                        <input type="number" class="form-control entity-StatsEnergy" value="${stats['Energy']}" placeholder="Energy" />
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-addon">Affection</span>
+                        <input type="number" class="form-control entity-StatsAffection" value="${stats['Affection']}" placeholder="Affection" />
+                        <span class="input-group-addon">State Flags</span>
+                        <input type="number" class="form-control entity-StateFlags" value="${element['StateFlags']}" placeholder="State Flags" />
+                    </div>
+                </p>
+                <p><button onclick="TeleportEntity(${element['UniqueId']})" class="btn btn-block btn-primary">Teleport Entity</button></p>
+                <p><button onclick="CopyEntity(${element['UniqueId']})" class="btn btn-block btn-warning">Copy Entity</button></p>
+                <p><button onclick="DeleteEntity(${element['UniqueId']})" class="btn btn-block btn-danger">Delete Entity</button></p>
+			</div>
+		</div>
+	</div>`;
+        return template;
+    }
+
+    function UpdateType(element) {
+        var type = element.value;
+        var parent = element.parentElement.parentElement.parentElement.parentElement;
+        var uid = $(parent).attr('data-uid');
+        $(parent).attr('data-type', type);
+        $(parent).find('.panel-title>a').text(`Entity ${uid} | Type ${type}`);
+    }
+
+    function TeleportEntity(uid) {
+        // ask player position
+        Swal.fire({
+            title: 'Teleport Entity',
+            text: 'Please input the position you want to teleport to.',
+            input: 'text',
+            inputPlaceholder: 'X,Y,Z',
+            showCancelButton: true,
+            confirmButtonText: 'OK',
+        }).then((result) => {
+            if(result.value) {
+                var position = result.value;
+                var pos = position.split(',');
+                if (pos.length != 3) {
+                    Swal.fire({
+                        title: 'Teleport Failed',
+                        text: 'Invalid position.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    $(`div[data-uid=${uid}]`).find('.entity-PositionX').val(parseFloat(pos[0]));
+                    $(`div[data-uid=${uid}]`).find('.entity-PositionY').val(parseFloat(pos[1]));
+                    $(`div[data-uid=${uid}]`).find('.entity-PositionZ').val(parseFloat(pos[2]));
+                    Swal.fire({
+                        title: 'Teleport Success',
+                        text: 'Success teleport entity to ' + result.value,
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            } else {
+                Swal.fire({
+                    title: 'Teleport Canceled',
+                    text: 'You canceled teleport entity.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+    }
+</script>
+
+</html>

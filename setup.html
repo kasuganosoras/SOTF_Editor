@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sons Of The Forest - Save files editor by Akkariin | Setup Editor</title>
+    <link href="https://cfdx.zerodream.net/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cfdx.zerodream.net/css/admin.min.css" rel="stylesheet">
+    <link href="https://cfdx.zerodream.net/css/codemirror/codemirror.min.css" rel="stylesheet">
+    <link href="https://cfdx.zerodream.net/css/codemirror/monokai.min.css" rel="stylesheet">
+    <link href="https://cfdx.zerodream.net/font-awesome-pro-6.2.0/css/all.css" rel="stylesheet">
+    <link href="css/application.css" rel="stylesheet">
+    <style type="text/css">
+        .large-content {
+            min-height: 200px;
+            max-height: 512px;
+            min-width: 100%;
+            max-width: 100%;
+        }
+
+        .middle-content {
+            min-height: 100px;
+            max-height: 512px;
+            min-width: 100%;
+            max-width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <h1>Sons Of The Forest <span class="description">Save files editor by Akkariin</span></h1>
+                <div class="menu">
+                    <a href="./" title="Player"><i class="fas fa-signal-bars"></i>Player</a>
+                    <a href="./inventory.html" title="Inventory"><i class="fas fa-backpack"></i>Inventory</a>
+                    <a href="./entities.html" title="Entities"><i class="fas fa-skull"></i>Entities</a>
+                    <a href="./stats.html" title="Stats"><i class="fas fa-earth-americas"></i>Stats</a>
+                    <a href="./setup.html" title="Setup"><i class="fas fa-gear"></i>Setup</a>
+                    <a href="https://github.com/kasuganosoras/SOTF_Editor" title="Github" target="_blank"><i class="fas fa-brands fa-github"></i>Source Code</a>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="box">
+                    <div class="box-header">
+                        <h3 class="box-title">Setup Editor</h3>
+                    </div>
+                    <div class="box-body">
+                        <p>The <b>GameSetupSaveData.json</b> file stored your game setup, such as game mode, season time and animal spawn rate.</p>
+                        <p>The game mode value can be: Normal, Peaceful, Hard and Custom.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="box">
+                    <div class="box-header">
+                        <h3 class="box-title">Save File</h3>
+                    </div>
+                    <div class="box-body">
+                        <p>The save files can be found in this path, you can copy the path and replace the username and Steam ID to yours, then paste it in the file manager to open.</p>
+                        <p>If your computer has only logged your own Steam account, that should only have one child folder in your "Saves" folder. If there are many folders, you can find your Steam ID on <a href="https://steamid.io/" target="_blank">SteamID.IO</a> website.</p>
+                        <pre><code>C:\Users\&lt;Your Username&gt;\AppData\LocalLow\Endnight\SonsOfTheForest\Saves\&lt;Your Steam ID&gt;</code></pre>
+                        <p>When you open this folder, there will have up to 3 child folders inside it, the "Multiplayer" stored the files when you are the host in multiplayer game, the "SinglePlayer" is for single player game.</p>
+                        <p>Choose the game type you want to edit and open it, then you may see there are many child folders, you can sort them by modify time to find the latest save.</p>
+                        <hr>
+                        <h4>Load File</h4>
+                        <p>Please select GameSetupSaveData.json file</p>
+                        <p><input type="file" id="file" name="file" accept=".json" /></p>
+                        <button onclick="LoadSaveFile()" class="btn btn-small btn-block btn-success">Load File</button>
+                        <button onclick="SaveSaveFile()" class="btn btn-small btn-block btn-primary">Save File</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-8 editor-main">
+                <div class="box">
+                    <div class="box-header">
+                        <h3 class="box-title">Save Editor</h3>
+                    </div>
+                    <div class="box-body input-list">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" src="https://cfdx.zerodream.net/js/jquery.min.js"></script>
+<script type="text/javascript" src="https://cfdx.zerodream.net/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://cfdx.zerodream.net/js/sweetalert2/sweetalert2.all.min.js"></script>
+<script type="text/javascript">
+
+    var cacheEntries;
+
+    function LoadSaveFile() {
+        var file = document.getElementById("file").files[0];
+        if (file == null) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Please select a file',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            })
+            return;
+        }
+        var reader = new FileReader();
+        reader.readAsText(file, "UTF-8");
+        reader.onload = function(evt) {
+            var data = evt.target.result;
+            var json = JSON.parse(data);
+            if(json["Data"]["GameSetup"] != null && json["Data"]["GameSetup"] != undefined) {
+                console.log(json["Data"]["GameSetup"]);
+                LoadGameSetup(json["Data"]["GameSetup"]);
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Failed to load save file, please check the file is correct',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                })
+            }
+        }
+        reader.onerror = function(evt) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to load save file, please check the file is correct',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            })
+        }
+    }
+
+    function TranslateName(key) {
+        var nameList = {
+            "Mode": "Game Mode",
+            "UID": "Save UID",
+            "GameSetting.Vail.EnemySpawn": "Spawn Enemies",
+            "GameSetting.Vail.AnimalSpawnRate": "Animal Spawn Rate",
+            "GameSetting.Environment.SeasonLength": "Season Length",
+        }
+        if(nameList[key] != null && nameList[key] != undefined) {
+            return nameList[key];
+        } else {
+            return key;
+        }
+    }
+
+    function LoadGameSetup(text) {
+        var json = JSON.parse(text);
+        if(json["_settings"] != null && json["_settings"] != undefined) {
+            cacheEntries = json["_settings"];
+            $(".input-list").html("<h4>Warning: Please backup your save file before editing it, and make sure you know what you are doing.</h4>");
+            $(".editor-main").fadeIn();
+            for(var i = 0; i < json["_settings"].length; i++) {
+                var element = json["_settings"][i];
+                var key = element["Name"];
+                var value = element["BoolValue"];
+                switch(element['SettingType']) {
+                    case 0:
+                        value = element["BoolValue"];
+                        AddCheckerForm(key, value);
+                        break;
+                    case 1:
+                        value = element["IntValue"];
+                        AddInputForm(key, value);
+                        break;
+                    case 2:
+                        value = element["FloatValue"];
+                        AddInputForm(key, value);
+                        break;
+                    case 3:
+                        value = element["StringValue"];
+                        AddInputForm(key, value);
+                        break;
+                    case 4:
+                        value = element["FloatArrayValue"];
+                        AddVectorForm(key, value);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        } else {
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to load save file, please check the file is correct',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            })
+        }
+    }
+
+    function SaveSaveFile() {
+        var fields = $(".editor-input");
+        for(var i = 0; i < fields.length; i++) {
+            var field = fields[i];
+            var key = $(field).attr("data-field");
+            var value = $(field).val();
+            var type = $(field).attr("type");
+            if(type == "checkbox") {
+                value = $(field).prop("checked");
+            }
+            for(var j = 0; j < cacheEntries.length; j++) {
+                var element = cacheEntries[j];
+                if(element["Name"] == key) {
+                    switch(element['SettingType']) {
+                        case 0:
+                            element["BoolValue"] = value;
+                            break;
+                        case 1:
+                            element["IntValue"] = value;
+                            break;
+                        case 2:
+                            element["FloatValue"] = value;
+                            break;
+                        case 3:
+                            element["StringValue"] = value;
+                            break;
+                        case 4:
+                            array = value.split(",");
+                            for(var k = 0; k < array.length; k++) {
+                                array[k] = parseFloat(array[k]);
+                            }
+                            element["FloatArrayValue"] = array;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        var file = document.getElementById("file").files[0];
+        var reader = new FileReader();
+        reader.readAsText(file, "UTF-8");
+        reader.onload = function(evt) {
+            var data = evt.target.result;
+            var json = JSON.parse(data);
+            json["Data"]["GameSetup"] = JSON.stringify({"_settings": cacheEntries});
+            var data = JSON.stringify(json);
+            var blob = new Blob([data], {type: "text/plain;charset=utf-8"});
+            SaveAs(blob, "GameSetupSaveData.json");
+        }
+    }
+
+    function SaveAs(obj, fileName) {
+        var link = document.createElement('a');
+        link.download = fileName;
+        link.style.display = 'none';
+        link.href = URL.createObjectURL(obj);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function AddCheckerForm(key, value) {
+        var name = TranslateName(key);
+        var checked = value ? "checked" : "";
+        var html = `<div class="form-group"><label class="form-label">${name}</label><div class="form-check"><input class="form-check-input editor-input" type="checkbox" id="${key}" data-field="${key}" ${checked}><label class="form-check-label" for="${key}">&nbsp;Enable</label></div></div>`;
+        $(".input-list").append(html);
+    }
+
+    function AddInputForm(key, value) {
+        var name = TranslateName(key);
+        var html = `<div class="form-group"><label class="form-label">${name}</label><input type="text" class="form-control editor-input" id="${key}" data-field="${key}" value="${value}"></div>`;
+        $(".input-list").append(html);
+    }
+
+    function AddVectorForm(key, value) {
+        var name = TranslateName(key);
+        value = value.join(", ");
+        var html = `<div class="form-group"><label class="form-label">${name}</label><input type="text" class="form-control editor-input" id="${key}" data-field="${key}" value="${value}"></div>`;
+        $(".input-list").append(html);
+    }
+</script>
+
+</html>
